@@ -74,19 +74,12 @@ if "questions" not in st.session_state:
     st.session_state.answered = False
     st.session_state.feedback_type = ""  # "correct" or "wrong"
     st.session_state.just_answered = False
-    # Pick unique bot names randomly
     st.session_state.bot_names = random.sample(BOT_NAME_POOL, NUM_BOTS)
     st.session_state.bot_scores = {bot: 0 for bot in st.session_state.bot_names}
 
-# ---------- BACKGROUND MUSIC ----------
-st.markdown(
-    f"""
-    <audio autoplay loop hidden>
-        <source src="{BACKGROUND_MUSIC_URL}" type="audio/mp3">
-    </audio>
-    """,
-    unsafe_allow_html=True,
-)
+# ---------- BACKGROUND MUSIC (Sidebar with controls) ----------
+st.sidebar.markdown("### 🎵 Background Music")
+st.sidebar.audio(BACKGROUND_MUSIC_URL, format='audio/mp3')
 
 # ---------- NAME INPUT ----------
 if not st.session_state.name:
@@ -100,7 +93,6 @@ if st.session_state.index >= len(st.session_state.questions):
     st.balloons()
     st.markdown(f"<h1 class='big-text' style='color:green;'>🎉 Quiz Complete!</h1>", unsafe_allow_html=True)
 
-    # Final scoreboard
     final_scores = {st.session_state.name: st.session_state.score}
     final_scores.update(st.session_state.bot_scores)
     sorted_scores = sorted(final_scores.items(), key=lambda x: x[1], reverse=True)
@@ -132,7 +124,6 @@ if not st.session_state.answered:
                 clicked_option = opt
 
     if clicked_option is not None:
-        # Evaluate player answer
         if clicked_option == q["correct"]:
             st.session_state.score += POINTS_PER_QUESTION
             st.session_state.feedback_type = "correct"
@@ -152,19 +143,13 @@ if st.session_state.answered:
     if st.session_state.feedback_type == "correct":
         st.success("✅ Correct!")
         st.balloons()
-        st.markdown(f"""
-            <audio autoplay>
-                <source src="{SOUND_CORRECT}" type="audio/ogg">
-            </audio>
-        """, unsafe_allow_html=True)
+        if st.button("▶️ Play Cheer Sound"):
+            st.audio(SOUND_CORRECT, format="audio/ogg")
     else:
         st.error("❌ Wrong!")
         st.markdown("<h1 class='center-text' style='color:red;'>❌</h1>", unsafe_allow_html=True)
-        st.markdown(f"""
-            <audio autoplay>
-                <source src="{SOUND_WRONG}" type="audio/ogg">
-            </audio>
-        """, unsafe_allow_html=True)
+        if st.button("▶️ Play Buzz Sound"):
+            st.audio(SOUND_WRONG, format="audio/ogg")
 
     # Show leaderboard after this question
     current_scores = {st.session_state.name: st.session_state.score}
