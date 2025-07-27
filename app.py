@@ -8,15 +8,13 @@ st.set_page_config(page_title="Kahoot Math Quiz", layout="wide")
 NUM_BOTS = 5
 POINTS_PER_QUESTION = 10
 
-# List of some realistic random names for bots
+# List of realistic names for bots
 REALISTIC_NAMES = [
     "Alice", "Bob", "Charlie", "Diana", "Ethan",
     "Fiona", "George", "Hannah", "Ian", "Julia",
     "Kevin", "Lily", "Michael", "Nina", "Oscar",
     "Paula", "Quinn", "Rachel", "Steve", "Tina"
 ]
-
-BOT_NAMES = random.sample(REALISTIC_NAMES, NUM_BOTS)
 
 # --------- QUESTION BANK ----------
 questions = [
@@ -42,7 +40,7 @@ questions = [
     {"question": "7 + 1 = ?", "options": [7, 8, 9, 10], "correct": 8},
 ]
 
-# --------- INITIALIZE SESSION STATE ----------
+# --------- SESSION STATE INIT ---------
 if "questions" not in st.session_state:
     st.session_state.questions = random.sample(questions, len(questions))
     st.session_state.index = 0
@@ -50,13 +48,18 @@ if "questions" not in st.session_state:
     st.session_state.name = ""
     st.session_state.answered = False
     st.session_state.feedback_type = ""  # "correct" or "wrong"
-    st.session_state.bot_scores = {bot: 0 for bot in BOT_NAMES}
-    st.session_state.answer_selected = None  # store user’s selected answer
+    st.session_state.answer_selected = None
 
-# --------- CUSTOM CSS FOR BIG BUTTONS AND TEXT ----------
+if "bot_names" not in st.session_state:
+    st.session_state.bot_names = random.sample(REALISTIC_NAMES, NUM_BOTS)
+
+if "bot_scores" not in st.session_state:
+    st.session_state.bot_scores = {bot: 0 for bot in st.session_state.bot_names}
+
+# --------- CSS FOR BIG BUTTONS AND TEXT ---------
 st.markdown("""
 <style>
-.big-button > button {
+div.stButton > button {
     font-size: 1.8rem !important;
     padding: 15px 0 !important;
     width: 100% !important;
@@ -65,6 +68,7 @@ st.markdown("""
 .big-text {
     font-size: 2rem !important;
     font-weight: 600;
+    text-align: center;
 }
 .center-text {
     text-align: center;
@@ -72,14 +76,14 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --------- PLAYER NAME INPUT ----------
+# --------- PLAYER NAME INPUT ---------
 if not st.session_state.name:
     st.markdown("<h1 class='center-text'>🎮 Welcome to Math Quiz Battle!</h1>", unsafe_allow_html=True)
     st.session_state.name = st.text_input("Enter your nickname to start:", key="name_input", label_visibility="visible")
     if not st.session_state.name:
         st.stop()
 
-# --------- QUIZ FINISHED ----------
+# --------- QUIZ COMPLETE ---------
 if st.session_state.index >= len(st.session_state.questions):
     st.balloons()
     st.markdown(f"<h1 class='center-text' style='color:green;'>🎉 Quiz Complete! 🎉</h1>", unsafe_allow_html=True)
@@ -97,12 +101,12 @@ if st.session_state.index >= len(st.session_state.questions):
         st.experimental_rerun()
     st.stop()
 
-# --------- CURRENT QUESTION ----------
+# --------- DISPLAY CURRENT QUESTION ---------
 q = st.session_state.questions[st.session_state.index]
 st.markdown(f"<h2 class='center-text big-text'>{q['question']}</h2>", unsafe_allow_html=True)
 st.progress((st.session_state.index + 1) / len(st.session_state.questions))
 
-# --------- ANSWER SELECTION ----------
+# --------- ANSWER SELECTION ---------
 if not st.session_state.answered:
     if st.session_state.answer_selected is None:
         options = q["options"].copy()
@@ -111,7 +115,7 @@ if not st.session_state.answered:
 
         for i, opt in enumerate(options):
             with cols[i % 2]:
-                if st.button(str(opt), key=f"opt_{opt}", help="Click to answer", args=None):
+                if st.button(str(opt), key=f"opt_{opt}", help="Click to answer"):
                     st.session_state.answer_selected = opt
                     if opt == q["correct"]:
                         st.session_state.score += POINTS_PER_QUESTION
@@ -120,28 +124,14 @@ if not st.session_state.answered:
                         st.session_state.feedback_type = "wrong"
                     st.session_state.answered = True
 
-                    # Bots answer (75% chance to get it right)
-                    for bot in BOT_NAMES:
+                    # Bots answer (75% chance correct)
+                    for bot in st.session_state.bot_names:
                         if random.random() < 0.75:
                             st.session_state.bot_scores[bot] += POINTS_PER_QUESTION
-    # Apply bigger button style
-    st.markdown(
-        """
-        <style>
-        div.stButton > button {
-            font-size: 1.8rem !important;
-            padding: 15px 0 !important;
-            width: 100% !important;
-            font-weight: bold !important;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
 else:
     st.markdown(f"<p class='big-text center-text'>You selected: <strong>{st.session_state.answer_selected}</strong></p>", unsafe_allow_html=True)
 
-# --------- FEEDBACK & LEADERBOARD AFTER ANSWER ----------
+# --------- FEEDBACK AND LEADERBOARD ---------
 if st.session_state.answered:
     if st.session_state.feedback_type == "correct":
         st.success("✅ Correct!")
