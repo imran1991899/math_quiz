@@ -85,7 +85,8 @@ if not st.session_state.music_muted:
 mute_btn = "🔈 Mute Music" if not st.session_state.music_muted else "🔇 Unmute Music"
 if st.button(mute_btn):
     st.session_state.music_muted = not st.session_state.music_muted
-    st.experimental_rerun()
+    st.session_state.go_next = True
+
 
 # ---------- NAME INPUT ----------
 if not st.session_state.name:
@@ -109,7 +110,7 @@ if st.session_state.index >= len(st.session_state.questions):
     if st.button("🔁 Play Again"):
         for k in list(st.session_state.keys()):
             del st.session_state[k]
-        st.experimental_rerun()
+        st.session_state.go_next = True
     st.stop()
 
 # ---------- SHOW QUESTION ----------
