@@ -97,7 +97,9 @@ if not st.session_state.answered:
                     if random.random() < 0.75:  # 75% chance to get it right
                         st.session_state.bot_scores[bot] += POINTS_PER_QUESTION
 
-                st.experimental_rerun()
+                # Don't call st.experimental_rerun() here
+                st.experimental_rerun()  # <-- REMOVE this line
+                # Instead, just let Streamlit rerun naturally after the button click
 
 # ---------- FEEDBACK ----------
 if st.session_state.answered:
@@ -120,3 +122,5 @@ if st.session_state.answered:
         st.session_state.index += 1
         st.session_state.answered = False
         st.experimental_rerun()
+    else:
+        st.stop()  # Prevent further code execution until next question
