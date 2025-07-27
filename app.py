@@ -34,26 +34,30 @@ questions = [
     {"question": "5 + 3 = ?", "options": [7, 8, 9, 10], "correct": 8},
 ]
 
-# ---------- CSS FOR BIG BUTTONS ----------
+# ---------- CSS FOR BIG BUTTONS AND TEXT ----------
 st.markdown("""
-<style>
-div.stButton > button {
-    font-size: 55px !important;
-    padding: 25px 0 !important;
-    height: 90px !important;
-    width: 100% !important;
-    font-weight: bold !important;
-    border-radius: 12px;
-}
-.big-text {
-    font-size: 2rem !important;
-    font-weight: 600;
-    text-align: center;
-}
-.center-text {
-    text-align: center;
-}
-</style>
+    <style>
+    html, body, [class*="css"] {
+        font-size: 26px !important;
+    }
+    div.stButton > button {
+        font-size: 36px !important;
+        padding: 25px 0 !important;
+        height: 100px !important;
+        width: 100% !important;
+        font-weight: bold !important;
+        border-radius: 12px;
+    }
+    .big-text {
+        font-size: 42px !important;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 25px;
+    }
+    .center-text {
+        text-align: center;
+    }
+    </style>
 """, unsafe_allow_html=True)
 
 # ---------- SESSION INIT ----------
@@ -85,7 +89,7 @@ if st.button(mute_btn):
 
 # ---------- NAME INPUT ----------
 if not st.session_state.name:
-    st.markdown("<h1 class='center-text'>🎮 Welcome to Math Quiz Battle!</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 class='center-text big-text'>🎮 Welcome to Math Quiz Battle!</h1>", unsafe_allow_html=True)
     st.session_state.name = st.text_input("Enter your nickname to start:")
     if not st.session_state.name:
         st.stop()
@@ -93,7 +97,7 @@ if not st.session_state.name:
 # ---------- GAME COMPLETE ----------
 if st.session_state.index >= len(st.session_state.questions):
     st.balloons()
-    st.markdown("<h1 class='center-text' style='color:green;'>🎉 Quiz Complete!</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 class='center-text big-text' style='color:green;'>🎉 Quiz Complete!</h1>", unsafe_allow_html=True)
 
     final_scores = {st.session_state.name: st.session_state.score}
     final_scores.update(st.session_state.bot_scores)
