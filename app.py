@@ -53,7 +53,7 @@ if "bot_names" not in st.session_state:
     st.session_state.bot_names = random.sample(REALISTIC_NAMES, NUM_BOTS)
     st.session_state.bot_scores = {bot: 0 for bot in st.session_state.bot_names}
 
-# Defensive check for bot_scores keys (in case something weird happens)
+# Defensive check for bot_scores keys
 for bot in st.session_state.bot_names:
     if bot not in st.session_state.bot_scores:
         st.session_state.bot_scores[bot] = 0
