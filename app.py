@@ -129,7 +129,6 @@ if not st.session_state.answered:
                     # Bots answer (75% chance correct)
                     for bot in st.session_state.bot_names:
                         if random.random() < 0.75:
-                            # Defensive fix: make sure bot key exists
                             if bot not in st.session_state.bot_scores:
                                 st.session_state.bot_scores[bot] = 0
                             st.session_state.bot_scores[bot] += POINTS_PER_QUESTION
@@ -145,6 +144,7 @@ if st.session_state.answered:
         st.error("❌ Wrong!")
         st.markdown("<h1 class='center-text' style='color:red;'>❌</h1>", unsafe_allow_html=True)
 
+    # Show leaderboard
     current_scores = {st.session_state.name: st.session_state.score}
     current_scores.update(st.session_state.bot_scores)
     sorted_current = sorted(current_scores.items(), key=lambda x: x[1], reverse=True)
@@ -152,8 +152,10 @@ if st.session_state.answered:
     st.markdown("### 📊 Leaderboard")
     st.table({name: score for name, score in sorted_current})
 
+    # Next question button
     if st.button("➡️ Next Question"):
         st.session_state.index += 1
         st.session_state.answered = False
         st.session_state.answer_selected = None
         st.session_state.feedback_type = ""
+
