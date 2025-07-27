@@ -38,7 +38,7 @@ questions = [
 st.markdown("""
 <style>
 div.stButton > button {
-    font-size: 32px !important;
+    font-size: 55px !important;
     padding: 25px 0 !important;
     height: 90px !important;
     width: 100% !important;
