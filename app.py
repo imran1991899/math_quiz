@@ -8,7 +8,6 @@ st.set_page_config(page_title="Kahoot Math Quiz", layout="wide")
 NUM_BOTS = 5
 POINTS_PER_QUESTION = 10
 
-# List of realistic names for bots
 REALISTIC_NAMES = [
     "Alice", "Bob", "Charlie", "Diana", "Ethan",
     "Fiona", "George", "Hannah", "Ian", "Julia",
@@ -52,9 +51,12 @@ if "questions" not in st.session_state:
 
 if "bot_names" not in st.session_state:
     st.session_state.bot_names = random.sample(REALISTIC_NAMES, NUM_BOTS)
-
-if "bot_scores" not in st.session_state:
     st.session_state.bot_scores = {bot: 0 for bot in st.session_state.bot_names}
+
+# Defensive check for bot_scores keys (in case something weird happens)
+for bot in st.session_state.bot_names:
+    if bot not in st.session_state.bot_scores:
+        st.session_state.bot_scores[bot] = 0
 
 # --------- CSS FOR BIG BUTTONS AND TEXT ---------
 st.markdown("""
@@ -127,6 +129,9 @@ if not st.session_state.answered:
                     # Bots answer (75% chance correct)
                     for bot in st.session_state.bot_names:
                         if random.random() < 0.75:
+                            # Defensive fix: make sure bot key exists
+                            if bot not in st.session_state.bot_scores:
+                                st.session_state.bot_scores[bot] = 0
                             st.session_state.bot_scores[bot] += POINTS_PER_QUESTION
 else:
     st.markdown(f"<p class='big-text center-text'>You selected: <strong>{st.session_state.answer_selected}</strong></p>", unsafe_allow_html=True)
