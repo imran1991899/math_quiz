@@ -1,6 +1,5 @@
 import streamlit as st
 import random
-import time
 
 # ---------- CONFIG ----------
 st.set_page_config(page_title="Kahoot Math Quiz", layout="wide")
@@ -43,13 +42,14 @@ if "questions" not in st.session_state:
     st.session_state.answered = False
     st.session_state.feedback_type = ""  # "correct" or "wrong"
     st.session_state.bot_scores = {name: 0 for name in BOT_NAMES}
-    st.session_state.scoreboard_history = []
 
 # ---------- NAME INPUT ----------
 if not st.session_state.name:
     st.markdown("<h1 style='text-align: center;'>🎮 Welcome to Math Quiz Battle!</h1>", unsafe_allow_html=True)
     st.session_state.name = st.text_input("Enter your nickname to start:")
-    st.stop()
+    if not st.session_state.name.strip():
+        st.stop()
+    # proceed if name entered
 
 # ---------- QUIZ COMPLETE ----------
 if st.session_state.index >= len(st.session_state.questions):
@@ -73,17 +73,17 @@ if st.session_state.index >= len(st.session_state.questions):
 # ---------- CURRENT QUESTION ----------
 q = st.session_state.questions[st.session_state.index]
 st.markdown(f"<h2 style='text-align: center;'>{q['question']}</h2>", unsafe_allow_html=True)
-st.progress(st.session_state.index / len(st.session_state.questions))
+st.progress((st.session_state.index) / len(st.session_state.questions))
 
 # ---------- Handle Answer ----------
 if not st.session_state.answered:
-    options = q["options"]
+    options = q["options"].copy()
     random.shuffle(options)
     cols = st.columns(2)
 
     for i, opt in enumerate(options):
         with cols[i % 2]:
-            if st.button(str(opt), use_container_width=True):
+            if st.button(str(opt), key=f"option_{opt}", use_container_width=True):
                 # Evaluate player answer
                 if opt == q["correct"]:
                     st.session_state.score += POINTS_PER_QUESTION
@@ -97,9 +97,7 @@ if not st.session_state.answered:
                     if random.random() < 0.75:  # 75% chance to get it right
                         st.session_state.bot_scores[bot] += POINTS_PER_QUESTION
 
-                # Don't call st.experimental_rerun() here
-                st.experimental_rerun()  # <-- REMOVE this line
-                # Instead, just let Streamlit rerun naturally after the button click
+                st.experimental_rerun()
 
 # ---------- FEEDBACK ----------
 if st.session_state.answered:
@@ -123,4 +121,4 @@ if st.session_state.answered:
         st.session_state.answered = False
         st.experimental_rerun()
     else:
-        st.stop()  # Prevent further code execution until next question
+        st.stop()
