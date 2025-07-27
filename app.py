@@ -14,7 +14,7 @@ BOT_NAME_POOL = [
     "Kevin", "Luna", "Mason", "Nina", "Oscar"
 ]
 
-BACKGROUND_MUSIC_URL = "https://cdn.pixabay.com/download/audio/2021/09/24/audio_66d23ee8af.mp3?filename=bright-joy-6351.mp3"
+BACKGROUND_MUSIC_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
 SOUND_CORRECT = "https://actions.google.com/sounds/v1/crowds/cheer.ogg"
 SOUND_WRONG = "https://actions.google.com/sounds/v1/alarms/buzzer.ogg"
 
@@ -73,6 +73,7 @@ if "questions" not in st.session_state:
     st.session_state.name = ""
     st.session_state.answered = False
     st.session_state.feedback_type = ""  # "correct" or "wrong"
+    st.session_state.just_answered = False
     # Pick unique bot names randomly
     st.session_state.bot_names = random.sample(BOT_NAME_POOL, NUM_BOTS)
     st.session_state.bot_scores = {bot: 0 for bot in st.session_state.bot_names}
@@ -127,7 +128,7 @@ if not st.session_state.answered:
 
     for i, opt in enumerate(options):
         with cols[i % 2]:
-            if st.button(str(opt), key=f"option_{i}", help="Select answer", args=None):
+            if st.button(str(opt), key=f"option_{i}"):
                 clicked_option = opt
 
     if clicked_option is not None:
@@ -139,13 +140,12 @@ if not st.session_state.answered:
             st.session_state.feedback_type = "wrong"
 
         st.session_state.answered = True
+        st.session_state.just_answered = True
 
         # Simulate bots answering
         for bot in st.session_state.bot_names:
             if random.random() < 0.75:
                 st.session_state.bot_scores[bot] += POINTS_PER_QUESTION
-
-        st.experimental_rerun()
 
 # ---------- FEEDBACK AND LEADERBOARD ----------
 if st.session_state.answered:
@@ -174,7 +174,8 @@ if st.session_state.answered:
     st.markdown("### 📊 Leaderboard")
     st.table({name: score for name, score in sorted_current})
 
-    if st.button("➡️ Next"):
+    # Next question button
+    if st.button("➡️ Next") and st.session_state.just_answered:
         st.session_state.index += 1
         st.session_state.answered = False
-        st.experimental_rerun()
+        st.session_state.just_answered = False
