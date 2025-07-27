@@ -7,7 +7,16 @@ st.set_page_config(page_title="Kahoot Math Quiz", layout="wide")
 # --------- CONSTANTS ----------
 NUM_BOTS = 5
 POINTS_PER_QUESTION = 10
-BOT_NAMES = [f"🤖 Bot_{i+1}" for i in range(NUM_BOTS)]
+
+# List of some realistic random names for bots
+REALISTIC_NAMES = [
+    "Alice", "Bob", "Charlie", "Diana", "Ethan",
+    "Fiona", "George", "Hannah", "Ian", "Julia",
+    "Kevin", "Lily", "Michael", "Nina", "Oscar",
+    "Paula", "Quinn", "Rachel", "Steve", "Tina"
+]
+
+BOT_NAMES = random.sample(REALISTIC_NAMES, NUM_BOTS)
 
 # --------- QUESTION BANK ----------
 questions = [
@@ -44,17 +53,36 @@ if "questions" not in st.session_state:
     st.session_state.bot_scores = {bot: 0 for bot in BOT_NAMES}
     st.session_state.answer_selected = None  # store user’s selected answer
 
+# --------- CUSTOM CSS FOR BIG BUTTONS AND TEXT ----------
+st.markdown("""
+<style>
+.big-button > button {
+    font-size: 1.8rem !important;
+    padding: 15px 0 !important;
+    width: 100% !important;
+    font-weight: bold !important;
+}
+.big-text {
+    font-size: 2rem !important;
+    font-weight: 600;
+}
+.center-text {
+    text-align: center;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # --------- PLAYER NAME INPUT ----------
 if not st.session_state.name:
-    st.markdown("<h1 style='text-align:center;'>🎮 Welcome to Math Quiz Battle!</h1>", unsafe_allow_html=True)
-    st.session_state.name = st.text_input("Enter your nickname to start:")
+    st.markdown("<h1 class='center-text'>🎮 Welcome to Math Quiz Battle!</h1>", unsafe_allow_html=True)
+    st.session_state.name = st.text_input("Enter your nickname to start:", key="name_input", label_visibility="visible")
     if not st.session_state.name:
         st.stop()
 
 # --------- QUIZ FINISHED ----------
 if st.session_state.index >= len(st.session_state.questions):
     st.balloons()
-    st.markdown(f"<h1 style='text-align:center; color:green;'>🎉 Quiz Complete! 🎉</h1>", unsafe_allow_html=True)
+    st.markdown(f"<h1 class='center-text' style='color:green;'>🎉 Quiz Complete! 🎉</h1>", unsafe_allow_html=True)
 
     final_scores = {st.session_state.name: st.session_state.score}
     final_scores.update(st.session_state.bot_scores)
@@ -71,7 +99,7 @@ if st.session_state.index >= len(st.session_state.questions):
 
 # --------- CURRENT QUESTION ----------
 q = st.session_state.questions[st.session_state.index]
-st.markdown(f"<h2 style='text-align:center;'>{q['question']}</h2>", unsafe_allow_html=True)
+st.markdown(f"<h2 class='center-text big-text'>{q['question']}</h2>", unsafe_allow_html=True)
 st.progress((st.session_state.index + 1) / len(st.session_state.questions))
 
 # --------- ANSWER SELECTION ----------
@@ -83,7 +111,7 @@ if not st.session_state.answered:
 
         for i, opt in enumerate(options):
             with cols[i % 2]:
-                if st.button(str(opt), key=f"opt_{opt}"):
+                if st.button(str(opt), key=f"opt_{opt}", help="Click to answer", args=None):
                     st.session_state.answer_selected = opt
                     if opt == q["correct"]:
                         st.session_state.score += POINTS_PER_QUESTION
@@ -96,8 +124,22 @@ if not st.session_state.answered:
                     for bot in BOT_NAMES:
                         if random.random() < 0.75:
                             st.session_state.bot_scores[bot] += POINTS_PER_QUESTION
+    # Apply bigger button style
+    st.markdown(
+        """
+        <style>
+        div.stButton > button {
+            font-size: 1.8rem !important;
+            padding: 15px 0 !important;
+            width: 100% !important;
+            font-weight: bold !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 else:
-    st.markdown(f"**You selected: {st.session_state.answer_selected}**")
+    st.markdown(f"<p class='big-text center-text'>You selected: <strong>{st.session_state.answer_selected}</strong></p>", unsafe_allow_html=True)
 
 # --------- FEEDBACK & LEADERBOARD AFTER ANSWER ----------
 if st.session_state.answered:
@@ -106,7 +148,7 @@ if st.session_state.answered:
         st.balloons()
     else:
         st.error("❌ Wrong!")
-        st.markdown("<h1 style='text-align:center; color:red;'>❌</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 class='center-text' style='color:red;'>❌</h1>", unsafe_allow_html=True)
 
     current_scores = {st.session_state.name: st.session_state.score}
     current_scores.update(st.session_state.bot_scores)
