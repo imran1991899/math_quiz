@@ -66,7 +66,7 @@ if st.session_state.index >= len(st.session_state.questions):
     if st.button("🔁 Play Again"):
         for key in list(st.session_state.keys()):
             del st.session_state[key]
-        st.experimental_rerun()  # safe here because inside button event
+        st.experimental_rerun()
     st.stop()
 
 # --------- CURRENT QUESTION ----------
@@ -76,32 +76,31 @@ st.progress((st.session_state.index + 1) / len(st.session_state.questions))
 
 # --------- ANSWER SELECTION ----------
 if not st.session_state.answered:
-    options = q["options"].copy()
-    random.shuffle(options)
-    cols = st.columns(2)
+    if st.session_state.answer_selected is None:
+        options = q["options"].copy()
+        random.shuffle(options)
+        cols = st.columns(2)
 
-    for i, opt in enumerate(options):
-        with cols[i % 2]:
-            if st.button(str(opt), key=f"opt_{opt}"):
-                st.session_state.answer_selected = opt
-                if opt == q["correct"]:
-                    st.session_state.score += POINTS_PER_QUESTION
-                    st.session_state.feedback_type = "correct"
-                else:
-                    st.session_state.feedback_type = "wrong"
-                st.session_state.answered = True
+        for i, opt in enumerate(options):
+            with cols[i % 2]:
+                if st.button(str(opt), key=f"opt_{opt}"):
+                    st.session_state.answer_selected = opt
+                    if opt == q["correct"]:
+                        st.session_state.score += POINTS_PER_QUESTION
+                        st.session_state.feedback_type = "correct"
+                    else:
+                        st.session_state.feedback_type = "wrong"
+                    st.session_state.answered = True
 
-                # Bots answer (75% chance to get it right)
-                for bot in BOT_NAMES:
-                    if random.random() < 0.75:
-                        st.session_state.bot_scores[bot] += POINTS_PER_QUESTION
-
-                # No rerun, just let Streamlit naturally rerun after interaction
-                # So no st.experimental_rerun() here
-                # Just break to stop rendering buttons after click
-                break
+                    # Bots answer (75% chance to get it right)
+                    for bot in BOT_NAMES:
+                        if random.random() < 0.75:
+                            st.session_state.bot_scores[bot] += POINTS_PER_QUESTION
 else:
-    # Show feedback
+    st.markdown(f"**You selected: {st.session_state.answer_selected}**")
+
+# --------- FEEDBACK & LEADERBOARD AFTER ANSWER ----------
+if st.session_state.answered:
     if st.session_state.feedback_type == "correct":
         st.success("✅ Correct!")
         st.balloons()
@@ -109,7 +108,6 @@ else:
         st.error("❌ Wrong!")
         st.markdown("<h1 style='text-align:center; color:red;'>❌</h1>", unsafe_allow_html=True)
 
-    # Leaderboard after question
     current_scores = {st.session_state.name: st.session_state.score}
     current_scores.update(st.session_state.bot_scores)
     sorted_current = sorted(current_scores.items(), key=lambda x: x[1], reverse=True)
@@ -122,4 +120,3 @@ else:
         st.session_state.answered = False
         st.session_state.answer_selected = None
         st.session_state.feedback_type = ""
-        # no need for st.experimental_rerun()
