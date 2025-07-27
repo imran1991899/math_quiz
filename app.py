@@ -2,7 +2,7 @@ import streamlit as st
 import random
 
 # ---------- CONFIG ----------
-st.set_page_config(page_title="Kahoot Math Quiz with Music", layout="wide")
+st.set_page_config(page_title="Kahoot Math Quiz", layout="wide")
 
 # ---------- CONSTANTS ----------
 NUM_BOTS = 5
@@ -15,8 +15,12 @@ REALISTIC_NAMES = [
     "Paula", "Quinn", "Rachel", "Steve", "Tina"
 ]
 
+# ---------- SOUND & MUSIC ----------
 BACKGROUND_MUSIC_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+SOUND_CORRECT = "https://actions.google.com/sounds/v1/crowds/cheer.ogg"
+SOUND_WRONG = "https://actions.google.com/sounds/v1/alarms/buzzer.ogg"
 
+# ---------- QUESTIONS ----------
 questions = [
     {"question": "1 + 1 = ?", "options": [2, 3, 4, 5], "correct": 2},
     {"question": "2 + 2 = ?", "options": [3, 4, 5, 6], "correct": 4},
@@ -28,48 +32,18 @@ questions = [
     {"question": "2 + 3 = ?", "options": [4, 5, 6, 7], "correct": 5},
     {"question": "6 + 2 = ?", "options": [7, 8, 9, 10], "correct": 8},
     {"question": "5 + 3 = ?", "options": [7, 8, 9, 10], "correct": 8},
-    {"question": "3 + 3 = ?", "options": [5, 6, 7, 8], "correct": 6},
-    {"question": "6 + 1 = ?", "options": [6, 7, 8, 9], "correct": 7},
-    {"question": "2 + 6 = ?", "options": [7, 8, 9, 10], "correct": 8},
-    {"question": "4 + 2 = ?", "options": [5, 6, 7, 8], "correct": 6},
-    {"question": "5 + 5 = ?", "options": [9, 10, 11, 12], "correct": 10},
-    {"question": "1 + 5 = ?", "options": [5, 6, 7, 8], "correct": 6},
-    {"question": "3 + 2 = ?", "options": [4, 5, 6, 7], "correct": 5},
-    {"question": "0 + 4 = ?", "options": [3, 4, 5, 6], "correct": 4},
-    {"question": "6 + 3 = ?", "options": [8, 9, 10, 11], "correct": 9},
-    {"question": "7 + 1 = ?", "options": [7, 8, 9, 10], "correct": 8},
 ]
 
-# ---------- SESSION STATE INIT ----------
-if "questions" not in st.session_state:
-    st.session_state.questions = random.sample(questions, len(questions))
-    st.session_state.index = 0
-    st.session_state.score = 0
-    st.session_state.name = ""
-    st.session_state.answered = False
-    st.session_state.feedback_type = ""  # "correct" or "wrong"
-    st.session_state.answer_selected = None
-
-if "bot_names" not in st.session_state:
-    st.session_state.bot_names = random.sample(REALISTIC_NAMES, NUM_BOTS)
-    st.session_state.bot_scores = {bot: 0 for bot in st.session_state.bot_names}
-
-# Defensive fix for bot scores dictionary
-for bot in st.session_state.bot_names:
-    if bot not in st.session_state.bot_scores:
-        st.session_state.bot_scores[bot] = 0
-
-if "music_muted" not in st.session_state:
-    st.session_state.music_muted = False
-
-# ---------- CSS FOR BIG BUTTONS AND TEXT ----------
+# ---------- CSS FOR BIG BUTTONS ----------
 st.markdown("""
 <style>
 div.stButton > button {
-    font-size: 1.8rem !important;
-    padding: 15px 0 !important;
+    font-size: 32px !important;
+    padding: 25px 0 !important;
+    height: 90px !important;
     width: 100% !important;
     font-weight: bold !important;
+    border-radius: 12px;
 }
 .big-text {
     font-size: 2rem !important;
@@ -82,94 +56,112 @@ div.stButton > button {
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- BACKGROUND MUSIC (HTML) ----------
+# ---------- SESSION INIT ----------
+if "questions" not in st.session_state:
+    st.session_state.questions = random.sample(questions, len(questions))
+    st.session_state.index = 0
+    st.session_state.score = 0
+    st.session_state.name = ""
+    st.session_state.answered = False
+    st.session_state.answer_selected = None
+    st.session_state.feedback_type = ""
+    st.session_state.music_muted = False
+    st.session_state.bot_names = random.sample(REALISTIC_NAMES, NUM_BOTS)
+    st.session_state.bot_scores = {bot: 0 for bot in st.session_state.bot_names}
+
+# ---------- BACKGROUND MUSIC ----------
 if not st.session_state.music_muted:
     st.markdown(f"""
     <audio autoplay loop>
       <source src="{BACKGROUND_MUSIC_URL}" type="audio/mp3">
-      Your browser does not support the audio element.
     </audio>
     """, unsafe_allow_html=True)
 
-# ---------- MUSIC MUTE/UNMUTE BUTTON ----------
-mute_button_label = "🔈 Mute Music" if not st.session_state.music_muted else "🔇 Unmute Music"
-if st.button(mute_button_label):
+# ---------- MUTE TOGGLE ----------
+mute_btn = "🔈 Mute Music" if not st.session_state.music_muted else "🔇 Unmute Music"
+if st.button(mute_btn):
     st.session_state.music_muted = not st.session_state.music_muted
     st.experimental_rerun()
 
-# ---------- PLAYER NAME INPUT ----------
+# ---------- NAME INPUT ----------
 if not st.session_state.name:
     st.markdown("<h1 class='center-text'>🎮 Welcome to Math Quiz Battle!</h1>", unsafe_allow_html=True)
-    st.session_state.name = st.text_input("Enter your nickname to start:", key="name_input", label_visibility="visible")
+    st.session_state.name = st.text_input("Enter your nickname to start:")
     if not st.session_state.name:
         st.stop()
 
-# ---------- QUIZ COMPLETE ----------
+# ---------- GAME COMPLETE ----------
 if st.session_state.index >= len(st.session_state.questions):
     st.balloons()
-    st.markdown(f"<h1 class='center-text' style='color:green;'>🎉 Quiz Complete! 🎉</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 class='center-text' style='color:green;'>🎉 Quiz Complete!</h1>", unsafe_allow_html=True)
 
     final_scores = {st.session_state.name: st.session_state.score}
     final_scores.update(st.session_state.bot_scores)
-    sorted_scores = sorted(final_scores.items(), key=lambda x: x[1], reverse=True)
+    leaderboard = sorted(final_scores.items(), key=lambda x: x[1], reverse=True)
 
     st.markdown("### 🏆 Final Leaderboard")
-    st.table({name: score for name, score in sorted_scores})
+    st.table({name: score for name, score in leaderboard})
 
     if st.button("🔁 Play Again"):
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
+        for k in list(st.session_state.keys()):
+            del st.session_state[k]
         st.experimental_rerun()
     st.stop()
 
-# ---------- DISPLAY CURRENT QUESTION ----------
+# ---------- SHOW QUESTION ----------
 q = st.session_state.questions[st.session_state.index]
 st.markdown(f"<h2 class='center-text big-text'>{q['question']}</h2>", unsafe_allow_html=True)
 st.progress((st.session_state.index + 1) / len(st.session_state.questions))
 
-# ---------- ANSWER SELECTION ----------
+# ---------- ANSWER CHOICE ----------
 if not st.session_state.answered:
-    if st.session_state.answer_selected is None:
-        options = q["options"].copy()
-        random.shuffle(options)
-        cols = st.columns(2)
+    options = q["options"].copy()
+    random.shuffle(options)
+    cols = st.columns(2)
 
-        for i, opt in enumerate(options):
-            with cols[i % 2]:
-                if st.button(str(opt), key=f"opt_{opt}", help="Click to answer"):
-                    st.session_state.answer_selected = opt
-                    if opt == q["correct"]:
-                        st.session_state.score += POINTS_PER_QUESTION
-                        st.session_state.feedback_type = "correct"
-                    else:
-                        st.session_state.feedback_type = "wrong"
-                    st.session_state.answered = True
+    for i, opt in enumerate(options):
+        with cols[i % 2]:
+            if st.button(str(opt), key=f"opt_{opt}"):
+                st.session_state.answer_selected = opt
+                if opt == q["correct"]:
+                    st.session_state.score += POINTS_PER_QUESTION
+                    st.session_state.feedback_type = "correct"
+                else:
+                    st.session_state.feedback_type = "wrong"
+                st.session_state.answered = True
 
-                    # Bots answer (75% chance correct)
-                    for bot in st.session_state.bot_names:
-                        if random.random() < 0.75:
-                            st.session_state.bot_scores[bot] += POINTS_PER_QUESTION
-else:
-    st.markdown(f"<p class='big-text center-text'>You selected: <strong>{st.session_state.answer_selected}</strong></p>", unsafe_allow_html=True)
+                # Bot simulate answer
+                for bot in st.session_state.bot_names:
+                    if random.random() < 0.75:
+                        st.session_state.bot_scores[bot] += POINTS_PER_QUESTION
 
-# ---------- FEEDBACK AND LEADERBOARD ----------
+# ---------- FEEDBACK ----------
 if st.session_state.answered:
     if st.session_state.feedback_type == "correct":
         st.success("✅ Correct!")
         st.balloons()
+        st.markdown(f"""
+            <audio autoplay>
+              <source src="{SOUND_CORRECT}" type="audio/ogg">
+            </audio>
+        """, unsafe_allow_html=True)
     else:
         st.error("❌ Wrong!")
         st.markdown("<h1 class='center-text' style='color:red;'>❌</h1>", unsafe_allow_html=True)
+        st.markdown(f"""
+            <audio autoplay>
+              <source src="{SOUND_WRONG}" type="audio/ogg">
+            </audio>
+        """, unsafe_allow_html=True)
 
     # Show leaderboard
-    current_scores = {st.session_state.name: st.session_state.score}
-    current_scores.update(st.session_state.bot_scores)
-    sorted_current = sorted(current_scores.items(), key=lambda x: x[1], reverse=True)
-
+    scores = {st.session_state.name: st.session_state.score}
+    scores.update(st.session_state.bot_scores)
+    leaderboard = sorted(scores.items(), key=lambda x: x[1], reverse=True)
     st.markdown("### 📊 Leaderboard")
-    st.table({name: score for name, score in sorted_current})
+    st.table({name: score for name, score in leaderboard})
 
-    # Next question button
+    # Next button
     if st.button("➡️ Next Question"):
         st.session_state.index += 1
         st.session_state.answered = False
